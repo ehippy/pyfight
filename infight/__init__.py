@@ -19,6 +19,8 @@ class Game(BaseModel):
     slack_channel = TextField(null=True)
     state = IntegerField(default=STATE_NEW)
 
+    ap_tick_seconds = 60*60
+
     board_x = IntegerField(null=True, default=5)
     board_y = IntegerField(null=True, default=5)
 
