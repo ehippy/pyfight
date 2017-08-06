@@ -3,7 +3,7 @@ from infight import *
 
 for game in Game.select():
     print(game)
-    if game.state == STATE_CANCELLED:
+    if game.state == GAME_STATE_CANCELLED:
         print("Already cancelled")
     else:
         game.cancel()
