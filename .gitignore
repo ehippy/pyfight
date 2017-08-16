@@ -1,2 +1,6 @@
 # Created by .ignore support plugin (hsz.mobi)
 .idea/
+/my_database.db
+.serverless/
+__pycache__/
+infight/__pycache__/
