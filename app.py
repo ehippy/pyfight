@@ -26,8 +26,24 @@ def favicon():
 @app.route('/{team}/exists', cors=True)
 def team_exists(team):
     try:
-        team = Team.get(Team.slack_domain == team)
-        return team is not None
+        auth = app.current_request.headers['authorization']
+        auth = auth.replace('Basic ', '')
+        decoded = jwt.decode(auth, os.environ['JWT_SECRET'], algorithm='HS256')
+    except KeyError:
+        return Response(status_code=401, body='Authorization not provided')
+    except jwt.exceptions.DecodeError:
+        return Response(status_code=401, body='Authorization not valid')
+
+    try:
+        team = Team.get(Team.slack_team_id == decoded['team_id'])
+
+        if team.slack_domain is None and team.slack_img is None:
+            team.slack_domain = decoded['team_domain']
+            team.slack_img = decoded['team_img']
+            team.save()
+
+        return True
+
     except DoesNotExist:
         return False
 
