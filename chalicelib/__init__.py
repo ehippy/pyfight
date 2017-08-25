@@ -17,7 +17,11 @@ ACTION_TYPE_MOVE = 1
 ACTION_TYPE_ATTACK = 2
 ACTION_TYPE_EXPAND_RANGE = 3
 
-db = SqliteExtDatabase('my_database.db')
+# db = SqliteExtDatabase('my_database.db')
+
+db = PostgresqlDatabase('postgres',
+                        host='localhost', port=32768, user='postgres', password='postgres',
+                        autocommit=True, autorollback=True)
 
 
 class BaseModel(Model):

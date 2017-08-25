@@ -1,4 +1,5 @@
 import os
+import urllib.parse
 import urllib.request
 import json
 import jwt
@@ -7,12 +8,18 @@ from chalice import Chalice, Response
 from chalicelib import *
 
 static_site_protocol_host_port = "http://localhost:3000"  # augment with environment var if avail
+api_protocol_host_port = "http://localhost:8000"
 
 app = Chalice(app_name='chill')
-
+app.debug = True
 
 @app.route('/')
 def index():
+    return {'hello': 'world', 'state': GAME_STATE_NEW}
+
+
+@app.route('/favicon.ico')
+def favicon():
     return {'hello': 'world', 'state': GAME_STATE_NEW}
 
 
@@ -33,35 +40,55 @@ def team_game_by_id(team, game_id):
 
 @app.route('/auth')
 def auth():
-    auth_code = app.current_request.query_params['code']
-    uri = 'https://slack.com/api/oauth.access?client_id='\
-          + os.environ['SLACK_CLIENT_ID'] + '&client_secret='\
-          + os.environ['SLACK_SECRET'] + '&code=' + auth_code
-    response = urllib.request.urlopen(uri).read()
-    json_response = json.loads(response)
+    response = get_slack_auth_response()
 
-    if json_response['ok']:
-
+    if response['ok']:
         cookie_payload = {
-            "user_id": json_response['user']['id'],
-            "user_name": json_response['user']['name'],
-            "user_img": json_response['user']['image_192'],
-            "team_id": json_response['team']['id'],
-            "team_domain": json_response['team']['domain'],
-            "team_img": json_response['team']['image_230'],
+            "user_id": response['user']['id'],
+            "user_name": response['user']['name'],
+            "user_img": response['user']['image_192'],
+            "team_id": response['team']['id'],
+            "team_domain": response['team']['domain'],
+            "team_img": response['team']['image_230'],
         }
 
         encoded_cookie = jwt.encode(cookie_payload, os.environ['JWT_SECRET'], algorithm='HS256').decode("utf-8")
-        return Response(
-            status_code=301,
-            body='',
-            headers={'Location': ("%s/?cookie=%s" % (static_site_protocol_host_port, encoded_cookie))})
+        return Response(status_code=301, body='',
+                        headers={'Location': ("%s/?cookie=%s" % (static_site_protocol_host_port, encoded_cookie))})
 
     print(json)
 
-    return {
-        "dict": app.current_request.to_dict()
-    }
+    return Response(status_code=301, body='',
+                    headers={'Location': ("%s/?err=%s" % (static_site_protocol_host_port, "Login Failed"))})
+
+
+@app.route('/install')
+def slack_install():
+    response = get_slack_auth_response(api_protocol_host_port + '/install')
+
+    print(response)
+
+    if response['ok']:
+
+        try:
+            team = Team.get(Team.slack_team_id == response['team_id'])
+            print("found a team, don't sweat it!")
+        except DoesNotExist:
+            print("could not find team, creating")
+            team = Team.create(
+                slack_team_id=response['team_id'],
+                slack_access_token=response['access_token'],
+                slack_team_name=response['team_name'],
+                slack_webhook_url=response['incoming_webhook']['url'],
+                slack_bot_id=response['bot']['bot_user_id'],
+                slack_bot_access_token=response['bot']['bot_access_token'],
+            )
+            team.save()
+            return Response(status_code=301, body='', headers={'Location': static_site_protocol_host_port})
+
+    return Response(status_code=301, body='',
+                    headers={'Location': ("%s/?err=%s" % (static_site_protocol_host_port, "Install Failed"))})
+
 
 # @app.route('/users', methods=['POST'])
 # def create_user():
@@ -72,3 +99,18 @@ def auth():
 #
 # See the README documentation for more examples.
 #
+
+
+def get_slack_auth_response(redirect_uri=None):
+    auth_code = app.current_request.query_params['code']
+    uri = 'https://slack.com/api/oauth.access?client_id=' \
+          + os.environ['SLACK_CLIENT_ID'] + '&client_secret=' \
+          + os.environ['SLACK_SECRET'] + '&code=' + auth_code
+
+    if redirect_uri is not None:
+        url_encode = urllib.parse.quote_plus(redirect_uri)
+        uri = uri + '&redirect_uri=' + url_encode
+
+    response = urllib.request.urlopen(uri).read()
+    json_response = json.loads(response)
+    return json_response
