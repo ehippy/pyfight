@@ -25,9 +25,23 @@ class BaseModel(Model):
         database = db
 
 
+class Team(BaseModel):
+    slack_domain = TextField(null=True)
+    slack_img = TextField(null=True)
+    slack_access_token = TextField(null=True)
+    slack_team_name = TextField(null=True)
+    slack_team_id = TextField(null=True)
+    slack_webhook_url = TextField(null=True)
+    slack_bot_id = TextField(null=True)
+    slack_bot_access_token = TextField(null=True)
+
+    @classmethod
+    def get_current_game(cls):
+        pass
+
+
 class Game(BaseModel):
-    slack_team = TextField(null=True)
-    slack_channel = TextField(null=True)
+    slack_team = ForeignKeyField(Team, related_name='team_games')
     state = IntegerField(default=GAME_STATE_NEW)
 
     ap_tick_seconds = AP_TICK_RATE
@@ -41,7 +55,7 @@ class Game(BaseModel):
 
 
 class Player(BaseModel):
-    game = ForeignKeyField(Game, related_name='player_games')
+    game = ForeignKeyField(Game, related_name='game_players')
     state = IntegerField(default=PLAYER_STATE_ALIVE)
     slack_user_id = TextField()
     hp = IntegerField(default=PLAYER_STARTING_HEALTH, null=True)
@@ -53,13 +67,13 @@ class Player(BaseModel):
 
 class Move(BaseModel):
     game = ForeignKeyField(Game, related_name='game_moves')
-    player = ForeignKeyField(Player, related_name='game_players')
+    player = ForeignKeyField(Player, related_name='player_moves')
     action = IntegerField()
 
 
 db.connect()
 try:
-    db.create_tables([Game, Player, Move])
+    db.create_tables([Game, Player, Move, Team])
     print("Tables created")
 except Exception:
     print("Tables not created")

@@ -6,6 +6,8 @@ import jwt
 from chalice import Chalice, Response
 from chalicelib import *
 
+static_site_protocol_host_port = "http://localhost:3000"  # augment with environment var if avail
+
 app = Chalice(app_name='chill')
 
 
@@ -14,15 +16,26 @@ def index():
     return {'hello': 'world', 'state': GAME_STATE_NEW}
 
 
-@app.route('/hello/{name}')
-def hello_name(name):
-    return {'hello': name}
+@app.route('/{team}/exists', cors=True)
+def team_exists(team):
+    try:
+        team = Team.get(Team.slack_domain == team)
+        return team is not None
+    except DoesNotExist:
+        return False
+
+
+@app.route('/{team}/game/{game_id}')
+def team_game_by_id(team, game_id):
+    game = Game.get(Game.id == game_id)
+    return game
 
 
 @app.route('/auth')
 def auth():
     auth_code = app.current_request.query_params['code']
-    uri = 'https://slack.com/api/oauth.access?client_id=' + os.environ['SLACK_CLIENT_ID'] + '&client_secret='\
+    uri = 'https://slack.com/api/oauth.access?client_id='\
+          + os.environ['SLACK_CLIENT_ID'] + '&client_secret='\
           + os.environ['SLACK_SECRET'] + '&code=' + auth_code
     response = urllib.request.urlopen(uri).read()
     json_response = json.loads(response)
@@ -39,12 +52,10 @@ def auth():
         }
 
         encoded_cookie = jwt.encode(cookie_payload, os.environ['JWT_SECRET'], algorithm='HS256').decode("utf-8")
-        redir_url = "http://localhost:4200/?cookie=%s" % encoded_cookie
-
         return Response(
-        status_code=301,
-        body='',
-        headers={'Location': redir_url})
+            status_code=301,
+            body='',
+            headers={'Location': ("%s/?cookie=%s" % (static_site_protocol_host_port, encoded_cookie))})
 
     print(json)
 
