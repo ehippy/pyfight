@@ -3,15 +3,20 @@ import urllib.parse
 import urllib.request
 import json
 import jwt
+import random
 
-from chalice import Chalice, Response
+from playhouse.shortcuts import model_to_dict
+from slackclient import SlackClient
+
+from chalice import Chalice, Response, BadRequestError
 from chalicelib import *
 
 static_site_protocol_host_port = "http://localhost:3000"  # augment with environment var if avail
 api_protocol_host_port = "http://localhost:8000"
 
-app = Chalice(app_name='chill')
+app = Chalice(app_name='infight')
 app.debug = True
+
 
 @app.route('/')
 def index():
@@ -25,27 +30,59 @@ def favicon():
 
 @app.route('/{team}/exists', cors=True)
 def team_exists(team):
-    try:
-        auth = app.current_request.headers['authorization']
-        auth = auth.replace('Basic ', '')
-        decoded = jwt.decode(auth, os.environ['JWT_SECRET'], algorithm='HS256')
-    except KeyError:
-        return Response(status_code=401, body='Authorization not provided')
-    except jwt.exceptions.DecodeError:
-        return Response(status_code=401, body='Authorization not valid')
+    request_jwt = get_request_jwt()
 
     try:
-        team = Team.get(Team.slack_team_id == decoded['team_id'])
+        team = Team.get(Team.slack_team_id == request_jwt['team_id'])
 
         if team.slack_domain is None and team.slack_img is None:
-            team.slack_domain = decoded['team_domain']
-            team.slack_img = decoded['team_img']
+            team.slack_domain = request_jwt['team_domain']
+            team.slack_img = request_jwt['team_img']
             team.save()
 
         return True
 
     except DoesNotExist:
         return False
+
+
+@app.route('/{team}/game', methods=['POST'], cors=True)
+def team_game_by_id(team):
+    teamobj = Team.get(Team.slack_domain == team)
+
+    sc = SlackClient(teamobj.slack_bot_access_token)
+    list = sc.api_call("channels.list")
+
+    channel_info = sc.api_call("channels.info", channel=list['channels'][0]['id'])  # todo: channel choosing mechanism
+
+    game = Game.create(
+        slack_team=teamobj,
+        slack_channel_id=channel_info['channel']['id'],
+        slack_channel_name=channel_info['channel']['name']
+    )
+    game.save()
+
+    names = []
+    for member_id in channel_info['channel']['members']:
+        member = sc.api_call("users.info", user=member_id)
+        if not member['user']['is_bot'] and not member['user']['is_app_user']:
+            player = Player.create(
+                game=game,
+                slack_user_id=member['user']['id'],
+                name=member['user']['name'],
+                img=member['user']['profile']['image_192'],
+                x=random.randint(0, game.board_x),
+                y=random.randint(0, game.board_y),
+            )
+            names.append(player.name)
+            player.save()
+
+    final_game = Game.get(Game.id == game.id)
+
+    sc.api_call("chat.postMessage", channel=final_game.slack_channel_name,
+                text="Call to arms, %s! A game has begun!" % ', '.join(names))
+
+    return model_to_dict(final_game, exclude=[Game.slack_team], backrefs=True)
 
 
 @app.route('/{team}/game/{game_id}')
@@ -130,3 +167,14 @@ def get_slack_auth_response(redirect_uri=None):
     response = urllib.request.urlopen(uri).read()
     json_response = json.loads(response)
     return json_response
+
+
+def get_request_jwt():
+    try:
+        auth_token_value = app.current_request.headers['authorization'].replace('Basic ', '')
+        decoded_jwt = jwt.decode(auth_token_value, os.environ['JWT_SECRET'], algorithm='HS256')
+        return decoded_jwt
+    except KeyError:
+        raise BadRequestError('Authorization header not provided')
+    except jwt.exceptions.DecodeError:
+        raise BadRequestError('Authorization header not valid')

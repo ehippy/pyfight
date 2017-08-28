@@ -46,6 +46,8 @@ class Team(BaseModel):
 
 class Game(BaseModel):
     slack_team = ForeignKeyField(Team, related_name='team_games')
+    slack_channel_id = TextField(null=True)
+    slack_channel_name = TextField(null=True)
     state = IntegerField(default=GAME_STATE_NEW)
 
     ap_tick_seconds = AP_TICK_RATE
@@ -62,15 +64,16 @@ class Player(BaseModel):
     game = ForeignKeyField(Game, related_name='game_players')
     state = IntegerField(default=PLAYER_STATE_ALIVE)
     slack_user_id = TextField()
+    name = TextField(null=True)
+    img = TextField(null=True)
     hp = IntegerField(default=PLAYER_STARTING_HEALTH, null=True)
-    ap = IntegerField(default=0, null=True)
+    ap = IntegerField(default=10, null=True)
     range = IntegerField(default=1)
     x = IntegerField(null=True)
     y = IntegerField(null=True)
 
 
 class Move(BaseModel):
-    game = ForeignKeyField(Game, related_name='game_moves')
     player = ForeignKeyField(Player, related_name='player_moves')
     action = IntegerField()
 
