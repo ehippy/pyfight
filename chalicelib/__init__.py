@@ -1,3 +1,4 @@
+import psycopg2
 from peewee import *
 from playhouse.sqlite_ext import SqliteExtDatabase
 
@@ -17,13 +18,11 @@ ACTION_TYPE_MOVE = 1
 ACTION_TYPE_ATTACK = 2
 ACTION_TYPE_EXPAND_RANGE = 3
 
-
-try:
+if False:
     db = PostgresqlDatabase('postgres',
                             host='localhost', port=32768, user='postgres', password='postgres',
                             autocommit=True, autorollback=True)
-except Exception:
-    print("Could not connect to postgres, going with sqlite")
+else:
     db = SqliteExtDatabase('my_database.db')
 
 
