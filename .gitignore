@@ -4,4 +4,3 @@
 __pycache__/
 infight/__pycache__/
 .chalice/deployments/
-.chalice/
