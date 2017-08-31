@@ -46,14 +46,27 @@ def team_exists(team):
         return False
 
 
+@app.route('/{team}/games', cors=True)
+def list_team_Games(team):
+    request_jwt = get_request_jwt()
+    team_from_route = Team.get(Team.slack_domain == team)
+    games = Game.get(Game.slack_team == team_from_route)
+
+    clean_games = []
+    for game in games:
+        clean_games.append(model_to_dict(game, exclude=[Game.slack_team], backrefs=True))
+
+    return clean_games
+
+
 @app.route('/{team}/game', methods=['POST'], cors=True)
 def team_game_by_id(team):
     teamobj = Team.get(Team.slack_domain == team)
 
     sc = SlackClient(teamobj.slack_bot_access_token)
-    list = sc.api_call("channels.list")
+    channel_list = sc.api_call("channels.list")
 
-    channel_info = sc.api_call("channels.info", channel=list['channels'][0]['id'])  # todo: channel choosing mechanism
+    channel_info = sc.api_call("channels.info", channel=channel_list['channels'][0]['id'])  # todo: channel choosing mechanism
 
     game = Game.create(
         slack_team=teamobj,
@@ -85,10 +98,11 @@ def team_game_by_id(team):
     return model_to_dict(final_game, exclude=[Game.slack_team], backrefs=True)
 
 
-@app.route('/{team}/game/{game_id}')
-def team_game_by_id(team, game_id):
-    game = Game.get(Game.id == game_id)
-    return game
+@app.route('/{team}/game/{gameid}')
+def team_game_by_id(team, gameid):
+    # agame = Game.get(Game.state == gameid)
+    # return agame
+    return None
 
 
 @app.route('/auth')
@@ -105,7 +119,7 @@ def auth():
             "team_img": response['team']['image_230'],
         }
 
-        encoded_cookie = jwt.encode(cookie_payload, os.environ['JWT_SECRET'], algorithm='HS256').decode("utf-8")
+        encoded_cookie = jwt.encode(cookie_payload, os.environ.get('JWT_SECRET'), algorithm='HS256').decode("utf-8")
         return Response(status_code=301, body='',
                         headers={'Location': ("%s/?cookie=%s" % (static_site_protocol_host_port, encoded_cookie))})
 
@@ -157,8 +171,8 @@ def slack_install():
 def get_slack_auth_response(redirect_uri=None):
     auth_code = app.current_request.query_params['code']
     uri = 'https://slack.com/api/oauth.access?client_id=' \
-          + os.environ['SLACK_CLIENT_ID'] + '&client_secret=' \
-          + os.environ['SLACK_SECRET'] + '&code=' + auth_code
+          + os.environ.get('SLACK_CLIENT_ID') + '&client_secret=' \
+          + os.environ.get('SLACK_SECRET') + '&code=' + auth_code
 
     if redirect_uri is not None:
         url_encode = urllib.parse.quote_plus(redirect_uri)
@@ -172,7 +186,7 @@ def get_slack_auth_response(redirect_uri=None):
 def get_request_jwt():
     try:
         auth_token_value = app.current_request.headers['authorization'].replace('Basic ', '')
-        decoded_jwt = jwt.decode(auth_token_value, os.environ['JWT_SECRET'], algorithm='HS256')
+        decoded_jwt = jwt.decode(auth_token_value, os.environ.get('JWT_SECRET'), algorithm='HS256')
         return decoded_jwt
     except KeyError:
         raise BadRequestError('Authorization header not provided')
