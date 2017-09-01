@@ -2,9 +2,13 @@ language: python
 python:
 - '3.6'
 install: pip install -r requirements.txt
-script: chalice deploy
+script:
+  - sed -i "s/SLUG_PGCFG/$PGCFG/g" .chalice/config.json
+  - cat .chalice/config.json
+  - chalice deploy
 env:
   global:
     - AWS_DEFAULT_REGION: us-east-1
+    - $PGCFG: test postgres value
     - secure: "jFT4oqyGAgMBa6IMKnqzpFhw9egmw5O1s6dOhB1mbX8MEhpxAvM5y4cnRSy20bi5nSDZPgnrTpCgWBhPV8Zs/NlnLENV0eO43vvCpw2a+ofO922tb/FEHZLLqobW4dkhzBCgddqCsneN7HzW4MFTEHWBg73mxkXjE1W2UbALESkbILGl1jKtmUpNJNHvbiejNcPl/0+yskm39Q0MLwLc13+fA29Qdihi5lakQCATWNVSrzOLONnuEOm1OPSHOGjHtT4sEoNfW7eFkQ0jiazKkYKJWmDZqQlcfwPPTUbQHoZ6wTCSlJd+XJBkpPO3TCGCa2ZUBz/9NQ6I/OhA7W/oYvuFe3gI8IZGIh5zqwwbUoZfEtxlZIdpWCjAgDFBMuSxhJm9hRzIA/G8c458H7u0O3KjUxCxztQ96NTYkN74AqQ+AvQwuFt3RKr2ClHBdHvufmdwve1tO+xh/B1tOHHlDLb9LbgKsh3hVKyfgSZh0Gc/FLq2vCQVgKKvToz0CcNk5277zdif0Nlh3/Xgsjut3L88tn32LHmnsBSEXiir929NkqrrWDFX+dDJACjixynQ2OTMoyV/WxD7s3oYe9x3e+6JRnWoPLKp398kkMeKqNTfaPFRrUbome48Z8yK2bUfNoN9jYQGWzvga/wTU+r+fZtCzY7pnolGwgdmTCAuurg="
     - secure: "tzBZUkvpWMSo7iv2VcE05jAxRcKAY85jv1pEwnb0JHI8udSsn9XyWD9wi1zZb727+vahiyLB8yAbLrhjD6wBgg9C/UWgsV3XoTq0NokzvM/dqX7AKPPcN+VP+jsveCuWE6bPmAZBCbq5MFJKTY7Jn1LnKe7NvNbOhMHdwNj5JiEij71CueQLdNJ/BthC4sP1gGQpHN/ZcUImAzFamSY3dZ/njJM+nDXmL7Y1nQKNKIp/lllgHTqHkRjXXhStJIoonX2Oivz5Ff/NHr22OGa1YRuK13hgKFEwVpg+x+qSADM+72gKgrpkbrnLxL5XbVEJfxfrYmMh3N97ibIRCM8hAU884hqh99baysOaZnmeA5x99aLYjH9BISszdvXRmHxLlRfVX+ZWwn7VX1CllYhFs/frZLdTwme5jzO0mDENg3pIsvn+zgI9ISgudXs5FYL3SjQ5/y8Im7yb9lqMpgngZ96VXL37LPdRJcGmoT+4SAKHCTYyEkX2DRwpDk/E1ZIxbuMW+uyhLL5Uufz1UR2Xr7Et5lokCnPKpLonJQL1rHx6hjrPfZ1WkiwFpPFqMssyBllBw5XnTq08jvu4Wel7cidt1ZpNZNGxVSx4QSZKjmeDcEb5VsDB4rHGQ5bvkJvLLFcvAH9cywIva1kvi4j6gBs5k6UR95WHc/1jeJQUoQM="

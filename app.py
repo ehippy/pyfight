@@ -14,7 +14,7 @@ from chalicelib import *
 static_site_protocol_host_port = "http://localhost:3000"  # augment with environment var if avail
 api_protocol_host_port = "http://localhost:8000"
 
-app = Chalice(app_name='infight')
+app = Chalice(app_name='pyfight')
 app.debug = True
 
 

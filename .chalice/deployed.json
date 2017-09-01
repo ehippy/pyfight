@@ -5,7 +5,7 @@
     "lambda_functions": {},
     "backend": "api",
     "chalice_version": "1.0.1",
-    "rest_api_id": "q4hmzs59j4",
+    "rest_api_id": "1dehtyfula",
     "api_gateway_stage": "api",
     "region": "us-east-1"
   }
