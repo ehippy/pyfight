@@ -1,0 +1,7 @@
+{
+    "SLACK_CLIENT_ID": "",
+    "SLACK_SECRET": "",
+    "JWT_SECRET": "",
+    "POSTGRES_CONN": "",
+    "YO": "dood"
+}

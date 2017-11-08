@@ -3,3 +3,4 @@ slackclient
 chalice
 PyJWT
 psycopg2
+boto3

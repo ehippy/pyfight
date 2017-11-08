@@ -2,19 +2,13 @@
   "version": "2.0",
   "app_name": "pyfight",
   "environment_variables": {
-    "SLACK_CLIENT_ID": "SLUG_SLACK_CLIENT_ID",
-    "SLACK_SECRET": "SLUG_SLACK_SECRET",
-    "JWT_SECRET": "SLUG_JWT_SECRET",
-    "PGCFG": "SLUG_PGCFG"
+    "CFG_BUCKET_NAME": "pyfight"
   },
   "stages": {
     "dev": {
-      "api_gateway_stage": "api"
-    },
-    "local": {
-      "environment_variables": {
-        "yo": "bro"
-      }
+      "api_gateway_stage": "api",
+      "manage_iam_role": false,
+      "iam_role_arn": "arn:aws:iam::213869164304:role/pyfight_iamrole"
     }
   }
 }
