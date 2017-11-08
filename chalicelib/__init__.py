@@ -4,7 +4,7 @@ import boto3
 from flask import json
 from peewee import *
 
-CFG_FILE_NAME = 'config.json'
+CFG_FILE_NAME = '/tmp/config.json'
 
 AP_TICK_RATE = 30
 
