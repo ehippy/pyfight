@@ -39,7 +39,7 @@ class PyfightConfig():
             return None
         print("Attempting S3 config download")
         s3 = boto3.client('s3')
-        s3.download_file(os.environ.get('CFG_BUCKET_NAME'), CFG_FILE_NAME, CFG_FILE_NAME)
+        s3.download_file(os.environ.get('CFG_BUCKET_NAME'), 'config.json', CFG_FILE_NAME)
         with open(CFG_FILE_NAME) as json_data:
             print("wrote config file")
             d = json.load(json_data)
