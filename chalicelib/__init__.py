@@ -1,6 +1,10 @@
-import psycopg2
+import os
+
+import boto3
+from flask import json
 from peewee import *
-from playhouse.sqlite_ext import SqliteExtDatabase
+
+CFG_FILE_NAME = 'config.json'
 
 AP_TICK_RATE = 30
 
@@ -18,11 +22,45 @@ ACTION_TYPE_MOVE = 1
 ACTION_TYPE_ATTACK = 2
 ACTION_TYPE_EXPAND_RANGE = 3
 
-if False:
-    db = PostgresqlDatabase('postgres',
-                            host='localhost', port=32768, user='postgres', password='postgres',
-                            autocommit=True, autorollback=True)
+
+class PyfightConfig():
+    @classmethod
+    def get(cls, key):
+        if os.environ.get(key) is not None:
+            return os.environ.get(key)
+
+        cfg_path = os.path.join(CFG_FILE_NAME)
+        with open(cfg_path) as json_data:
+            d = json.load(json_data)
+            print(d)
+            if d[key] is not None:
+                return d[key]
+
+        if os.environ.get('CFG_BUCKET_NAME') is None:
+            return None
+
+        s3 = boto3.client('s3')
+        s3.Bucket(os.environ.get('CFG_BUCKET_NAME')).download_file(CFG_FILE_NAME, cfg_path)
+        with open(cfg_path) as json_data:
+            d = json.load(json_data)
+            print(d)
+            if d[key] is not None:
+                return d[key]
+
+        return None
+
+
+if PyfightConfig.get('POSTGRES_HOST') is not None:
+    db = PostgresqlDatabase('pyfight',
+                            host=PyfightConfig.get('POSTGRES_HOST'),
+                            port=5432,
+                            user='pyfight',
+                            password=PyfightConfig.get('POSTGRES_PW'),
+                            autocommit=True,
+                            autorollback=True)
 else:
+    from playhouse.sqlite_ext import SqliteExtDatabase
+
     db = SqliteExtDatabase('my_database.db')
 
 

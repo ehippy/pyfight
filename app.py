@@ -12,8 +12,6 @@ from slackclient import SlackClient
 from chalice import Chalice, Response, BadRequestError
 from chalicelib import *
 
-CFG_FILE_NAME = 'config.json'
-
 static_site_protocol_host_port = "http://localhost:3000"  # augment with environment var if avail
 api_protocol_host_port = "http://localhost:8000"
 
@@ -23,7 +21,7 @@ app.debug = True
 
 @app.route('/')
 def index():
-    return {'hello': get_config_setting('YO'), 'state': GAME_STATE_NEW}
+    return {'hello': PyfightConfig.get('YO'), 'state': GAME_STATE_NEW}
 
 
 @app.route('/favicon.ico')
@@ -122,7 +120,7 @@ def auth():
             "team_img": response['team']['image_230'],
         }
 
-        encoded_cookie = jwt.encode(cookie_payload, get_config_setting('JWT_SECRET'), algorithm='HS256').decode("utf-8")
+        encoded_cookie = jwt.encode(cookie_payload, PyfightConfig.get('JWT_SECRET'), algorithm='HS256').decode("utf-8")
         return Response(status_code=301, body='',
                         headers={'Location': ("%s/?cookie=%s" % (static_site_protocol_host_port, encoded_cookie))})
 
@@ -174,8 +172,8 @@ def slack_install():
 def get_slack_auth_response(redirect_uri=None):
     auth_code = app.current_request.query_params['code']
     uri = 'https://slack.com/api/oauth.access?client_id=' \
-          + get_config_setting('SLACK_CLIENT_ID') + '&client_secret=' \
-          + get_config_setting('SLACK_SECRET') + '&code=' + auth_code
+          + PyfightConfig.get('SLACK_CLIENT_ID') + '&client_secret=' \
+          + PyfightConfig.get('SLACK_SECRET') + '&code=' + auth_code
 
     if redirect_uri is not None:
         url_encode = urllib.parse.quote_plus(redirect_uri)
@@ -189,34 +187,9 @@ def get_slack_auth_response(redirect_uri=None):
 def get_request_jwt():
     try:
         auth_token_value = app.current_request.headers['authorization'].replace('Basic ', '')
-        decoded_jwt = jwt.decode(auth_token_value, get_config_setting('JWT_SECRET'), algorithm='HS256')
+        decoded_jwt = jwt.decode(auth_token_value, PyfightConfig.get('JWT_SECRET'), algorithm='HS256')
         return decoded_jwt
     except KeyError:
         raise BadRequestError('Authorization header not provided')
     except jwt.exceptions.DecodeError:
         raise BadRequestError('Authorization header not valid')
-
-
-def get_config_setting(key):
-    if os.environ.get(key) is not None:
-        return os.environ.get(key)
-
-    cfg_path = os.path.join(CFG_FILE_NAME)
-    with open(cfg_path) as json_data:
-        d = json.load(json_data)
-        print(d)
-        if d[key] is not None:
-            return d[key]
-
-    if os.environ.get('CFG_BUCKET_NAME') is None:
-        return None
-
-    s3 = boto3.client('s3')
-    s3.Bucket(os.environ.get('CFG_BUCKET_NAME')).download_file(CFG_FILE_NAME, cfg_path)
-    with open(cfg_path) as json_data:
-        d = json.load(json_data)
-        print(d)
-        if d[key] is not None:
-            return d[key]
-
-    return None
