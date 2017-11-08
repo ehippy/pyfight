@@ -121,7 +121,7 @@ def auth():
         return Response(status_code=301, body='',
                         headers={'Location': ("%s/?cookie=%s" % (static_site_protocol_host_port, encoded_cookie))})
 
-    print(json)
+    print(response)
 
     return Response(status_code=301, body='',
                     headers={'Location': ("%s/?err=%s" % (static_site_protocol_host_port, "Login Failed"))})
