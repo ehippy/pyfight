@@ -1,4 +1,5 @@
 import os
+import random
 
 import boto3
 from flask import json
@@ -28,6 +29,10 @@ class PyfightConfig():
     def get(cls, key):
         if key in os.environ:
             return os.environ.get(key)
+
+        if random.uniform(0, 1) > 0.9:
+            if os.path.isfile(CFG_FILE_NAME):
+                os.remove(CFG_FILE_NAME)
 
         if os.path.isfile(CFG_FILE_NAME):
             with open(CFG_FILE_NAME) as json_data:
