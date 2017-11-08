@@ -9,7 +9,7 @@ from slackclient import SlackClient
 from chalice import Chalice, Response, BadRequestError
 from chalicelib import *
 
-static_site_protocol_host_port = PyfightConfig.get('HOST_WITH_PORT')
+static_site_protocol_host_port = PyfightConfig.get('WEB_HOST_WITH_PORT')
 api_protocol_host_port = PyfightConfig.get('API_HOST_WITH_PORT')
 
 app = Chalice(app_name='pyfight')
@@ -173,8 +173,7 @@ def get_slack_auth_response(redirect_uri=None):
           + PyfightConfig.get('SLACK_SECRET') + '&code=' + auth_code
 
     if redirect_uri is not None:
-        url_encode = urllib.parse.quote_plus(redirect_uri)
-        uri = uri + '&redirect_uri=' + url_encode
+        uri = uri + '&redirect_uri=' + urllib.parse.quote_plus(redirect_uri)
 
     response = urllib.request.urlopen(uri).read()
     json_response = json.loads(response)
