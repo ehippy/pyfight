@@ -26,17 +26,16 @@ ACTION_TYPE_EXPAND_RANGE = 3
 class PyfightConfig():
     @classmethod
     def get(cls, key):
-        if os.environ.get(key) is not None:
+        if key in os.environ:
             return os.environ.get(key)
 
         cfg_path = os.path.join(CFG_FILE_NAME)
         with open(cfg_path) as json_data:
             d = json.load(json_data)
-            print(d)
             if d[key] is not None:
                 return d[key]
 
-        if os.environ.get('CFG_BUCKET_NAME') is None:
+        if 'CFG_BUCKET_NAME' not in os.environ:
             return None
 
         s3 = boto3.client('s3')
