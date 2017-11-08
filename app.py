@@ -105,7 +105,7 @@ def team_game_by_id(team, gameid):
 
 @app.route('/auth')
 def auth():
-    response = get_slack_auth_response()
+    response = get_slack_auth_response(api_protocol_host_port + '/auth')
 
     if response['ok']:
         cookie_payload = {
