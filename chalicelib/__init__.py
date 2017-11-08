@@ -32,6 +32,7 @@ class PyfightConfig():
 
         if random.uniform(0, 1) > 0.9:
             if os.path.isfile(CFG_FILE_NAME):
+                print("Config Cache Bust")
                 os.remove(CFG_FILE_NAME)
 
         if os.path.isfile(CFG_FILE_NAME):
