@@ -29,18 +29,19 @@ class PyfightConfig():
         if key in os.environ:
             return os.environ.get(key)
 
-        cfg_path = os.path.join(CFG_FILE_NAME)
-        with open(cfg_path) as json_data:
-            d = json.load(json_data)
-            if key in d:
-                return d[key]
+        if os.path.isfile(CFG_FILE_NAME):
+            with open(CFG_FILE_NAME) as json_data:
+                d = json.load(json_data)
+                if key in d:
+                    return d[key]
 
         if 'CFG_BUCKET_NAME' not in os.environ:
             return None
-
+        print("Attempting S3 config download")
         s3 = boto3.client('s3')
-        s3.Bucket(os.environ.get('CFG_BUCKET_NAME')).download_file(CFG_FILE_NAME, cfg_path)
-        with open(cfg_path) as json_data:
+        s3.Bucket(os.environ.get('CFG_BUCKET_NAME')).download_file(CFG_FILE_NAME, CFG_FILE_NAME)
+        with open(CFG_FILE_NAME) as json_data:
+            print("wrote config file")
             d = json.load(json_data)
             if key in d:
                 return d[key]
