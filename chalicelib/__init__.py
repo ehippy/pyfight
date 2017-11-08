@@ -32,7 +32,7 @@ class PyfightConfig():
         cfg_path = os.path.join(CFG_FILE_NAME)
         with open(cfg_path) as json_data:
             d = json.load(json_data)
-            if d[key] is not None:
+            if key in d:
                 return d[key]
 
         if 'CFG_BUCKET_NAME' not in os.environ:
@@ -42,8 +42,7 @@ class PyfightConfig():
         s3.Bucket(os.environ.get('CFG_BUCKET_NAME')).download_file(CFG_FILE_NAME, cfg_path)
         with open(cfg_path) as json_data:
             d = json.load(json_data)
-            print(d)
-            if d[key] is not None:
+            if key in d:
                 return d[key]
 
         return None
