@@ -3,5 +3,6 @@
     "SLACK_SECRET": "",
     "JWT_SECRET": "",
     "POSTGRES_CONN": "",
-    "YO": "dood"
+    "WEB_HOST_WITH_PORT": "http://localhost:3000",
+    "API_HOST_WITH_PORT": "http://localhost:8000"
 }

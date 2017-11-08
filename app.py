@@ -1,10 +1,7 @@
-import os
 import urllib.parse
 import urllib.request
 import json
-import boto3
 import jwt
-import random
 
 from playhouse.shortcuts import model_to_dict
 from slackclient import SlackClient
@@ -12,8 +9,8 @@ from slackclient import SlackClient
 from chalice import Chalice, Response, BadRequestError
 from chalicelib import *
 
-static_site_protocol_host_port = "http://localhost:3000"  # augment with environment var if avail
-api_protocol_host_port = "http://localhost:8000"
+static_site_protocol_host_port = PyfightConfig.get('HOST_WITH_PORT')
+api_protocol_host_port = PyfightConfig.get('API_HOST_WITH_PORT')
 
 app = Chalice(app_name='pyfight')
 app.debug = True
@@ -21,7 +18,7 @@ app.debug = True
 
 @app.route('/')
 def index():
-    return {'hello': PyfightConfig.get('YO'), 'state': GAME_STATE_NEW}
+    return {'hello': PyfightConfig.get('API_HOST_WITH_PORT'), 'state': GAME_STATE_NEW}
 
 
 @app.route('/favicon.ico')
