@@ -1,4 +1,4 @@
-# pyfight
+# pyfight [![Build Status](https://travis-ci.org/ehippy/pyfight.svg?branch=master)](https://travis-ci.org/ehippy/pyfight)
 Server for infight games.
 
 plz set following environment vars:
