@@ -1,11 +1,6 @@
-import os
-import random
-
-import boto3
-from flask import json
 from peewee import *
 
-CFG_FILE_NAME = '/tmp/config.json'
+from chalicelib.PyfightConfig import PyfightConfig
 
 AP_TICK_RATE = 30
 
@@ -22,37 +17,6 @@ PLAYER_STARTING_HEALTH = 3
 ACTION_TYPE_MOVE = 1
 ACTION_TYPE_ATTACK = 2
 ACTION_TYPE_EXPAND_RANGE = 3
-
-
-class PyfightConfig():
-    @classmethod
-    def get(cls, key):
-        if key in os.environ:
-            return os.environ.get(key)
-
-        if random.uniform(0, 1) > 0.9:
-            if os.path.isfile(CFG_FILE_NAME):
-                print("Config Cache Bust")
-                os.remove(CFG_FILE_NAME)
-
-        if os.path.isfile(CFG_FILE_NAME):
-            with open(CFG_FILE_NAME) as json_data:
-                d = json.load(json_data)
-                if key in d:
-                    return d[key]
-
-        if 'CFG_BUCKET_NAME' not in os.environ:
-            return None
-        print("Attempting S3 config download")
-        s3 = boto3.client('s3')
-        s3.download_file(os.environ.get('CFG_BUCKET_NAME'), 'config.json', CFG_FILE_NAME)
-        with open(CFG_FILE_NAME) as json_data:
-            print("wrote config file")
-            d = json.load(json_data)
-            if key in d:
-                return d[key]
-
-        return None
 
 
 if PyfightConfig.get('POSTGRES_HOST') is not None:
