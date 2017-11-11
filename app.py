@@ -97,11 +97,18 @@ def team_game_by_id(team):
     return model_to_dict(final_game, exclude=[Game.slack_team], backrefs=True)
 
 
-@app.route('/{team}/game/{gameid}')
+@app.route('/{team}/game/{gameid}', cors=True)
 def team_game_by_id(team, gameid):
-    # agame = Game.get(Game.state == gameid)
-    # return agame
-    return None
+    agame = Game.get(Game.state == gameid)
+    to_dict = model_to_dict(agame)
+    to_dict['players'] = []
+    for player in agame.game_players:
+        playa = model_to_dict(player)
+        del playa['game']
+        to_dict['players'].append(playa)
+
+    del to_dict['slack_team']
+    return to_dict
 
 
 @app.route('/auth')
